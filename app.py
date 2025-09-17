@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+from pathlib import Path
+import io
 
 from typing import List, Tuple, Optional
 
@@ -140,12 +142,45 @@ This app supports **two modes**:
 )
 
 uploaded = st.file_uploader("Upload season or player dataset (CSV)", type=["csv"])
-if uploaded:
-    df_raw = pd.read_csv(uploaded)
+
+def read_csv_safe(src):
+    # Path string or Path object
+    if isinstance(src, (str, Path)):
+        return pd.read_csv(src)
+    # Streamlit UploadedFile / file-like
+    if hasattr(src, "read"):
+        try:
+            src.seek(0)
+            return pd.read_csv(src)
+        except ValueError:
+            # Some environments need a BytesIO wrapper
+            src.seek(0)
+            return pd.read_csv(io.BytesIO(src.read()))
+    raise ValueError("Unsupported CSV source type")
+
+def load_default_csv() -> pd.DataFrame:
+    candidates = [
+        "players_data-2025_2026.csv",
+        "players_data_light-2025_2026.csv",
+        "data/players_data-2025_2026.csv",
+        "data/players_data_light-2025_2026.csv",
+    ]
+    for p in candidates:
+        if Path(p).exists():
+            st.info(f"Using default dataset bundled with the app: {p}")
+            return read_csv_safe(p)
+    st.error(
+        "No bundled dataset found. Upload a CSV or add one of the expected files "
+        "to the repo root (or a data/ folder)."
+    )
+    st.stop()
+
+# Decide source
+if uploaded is not None:
+    df_raw = read_csv_safe(uploaded)
 else:
-    # Load your dataset by default
-    df_raw = pd.read_csv("players_data-2025_2026.csv")
-    st.info("Using default dataset bundled with the app.")
+    df_raw = load_default_csv()
+
 
 
 df_raw = pd.read_csv(uploaded)
