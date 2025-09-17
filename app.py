@@ -182,8 +182,6 @@ else:
     df_raw = load_default_csv()
 
 
-
-df_raw = pd.read_csv(uploaded)
 df_raw = safe_downcast(df_raw)
 st.success(f"Loaded {df_raw.shape[0]} rows × {df_raw.shape[1]} columns.")
 with st.expander("Preview data", expanded=False):
