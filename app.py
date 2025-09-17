@@ -140,9 +140,13 @@ This app supports **two modes**:
 )
 
 uploaded = st.file_uploader("Upload season or player dataset (CSV)", type=["csv"])
-if not uploaded:
-    st.info("Upload a CSV to proceed.")
-    st.stop()
+if uploaded:
+    df_raw = pd.read_csv(uploaded)
+else:
+    # Load your dataset by default
+    df_raw = pd.read_csv("players_data-2025_2026.csv")
+    st.info("Using default dataset bundled with the app.")
+
 
 df_raw = pd.read_csv(uploaded)
 df_raw = safe_downcast(df_raw)
